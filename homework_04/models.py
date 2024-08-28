@@ -17,41 +17,45 @@ from sqlalchemy import create_engine
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 
-PG_CONN_URI = os.environ.get("SQLALCHEMY_PG_CONN_URI") or "postgresql+asyncpg://postgres:password@localhost/postgres"
-
-Base = None
+PG_CONN_URI = "postgresql+asyncpg://user:example@localhost:5432/blog"
 Session = None
 
-engine = create_engine(url=PG_CONN_URI)
-
-
-class Base(DeclarativeBase):
-
-    @declared_attr.directive
-    def __tablename__(cls):
-        return f"{cls.__name__.lower()}s"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
+Base = declarative_base()
+async_engine = create_async_engine(PG_CONN_URI, echo=False)
+async_session_local = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 class User(Base):
+    __tablename__ = 'users'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(32), unique=True)
     username: Mapped[str] = mapped_column(String(32), unique=True)
     email: Mapped[str | None] = mapped_column(unique=True)
-    posts: Mapped[list["Post"]] = relationship(back_populates="author")
+    posts: Mapped[list["Post"]] = relationship(back_populates="user")
 
 
 class Post(Base):
+    __tablename__ = 'posts'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
-    body: Mapped[str] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(String, nullable=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    author: Mapped["User"] = relationship(back_populates="posts")
+    user: Mapped["User"] = relationship(back_populates="posts")
 
+
+async def init_db():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
