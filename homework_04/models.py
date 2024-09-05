@@ -22,16 +22,21 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 PG_CONN_URI = "postgresql+asyncpg://user:example@localhost:5432/blog"
-Session = None
 
 Base = declarative_base()
 async_engine = create_async_engine(PG_CONN_URI, echo=False)
-async_session_local = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+Session = async_sessionmaker(bind=async_engine, expire_on_commit=False, autocommit=False,)
+
+
+async def get_async_session():
+    async with Session() as session:
+        yield session
 
 
 class User(Base):
@@ -59,3 +64,20 @@ async def init_db():
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+
+
+async def add_users_to_db(users_data):
+    async with AsyncSession(async_engine) as session:
+        for user in users_data:
+            new_user = User(name=user['name'], username=user['username'], email=user['email'])
+            session.add(new_user)
+        await session.commit()
+
+
+async def add_posts_to_db(posts_data):
+    async with AsyncSession(async_engine) as session:
+        for post in posts_data:
+            new_post = Post(user_id=post['userId'], title=post['title'], body=post['body'])
+            session.add(new_post)
+        await session.commit()
+

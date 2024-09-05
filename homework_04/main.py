@@ -14,24 +14,8 @@
 """
 import asyncio
 from jsonplaceholder_requests import fetch_users_data, fetch_posts_data
-from models import init_db, async_engine, User, Post
+from models import init_db, async_engine, User, Post, add_users_to_db, add_posts_to_db
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def add_users_to_db(users_data):
-    async with AsyncSession(async_engine) as session:
-        for user in users_data:
-            new_user = User(name=user['name'], username=user['username'], email=user['email'])
-            session.add(new_user)
-        await session.commit()
-
-
-async def add_posts_to_db(posts_data):
-    async with AsyncSession(async_engine) as session:
-        for post in posts_data:
-            new_post = Post(user_id=post['userId'], title=post['title'], body=post['body'])
-            session.add(new_post)
-        await session.commit()
 
 
 async def async_main():
