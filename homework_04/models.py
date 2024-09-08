@@ -8,22 +8,16 @@
 создайте связи relationship между моделями: User.posts и Post.user
 """
 
-import os
-
-from typing import TYPE_CHECKING, Text
 from datetime import datetime
 
-from sqlalchemy import create_engine
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
