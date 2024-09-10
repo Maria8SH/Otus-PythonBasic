@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-PG_CONN_URI = "postgresql+asyncpg://user:secretpassword@localhost:5432/blog"
+PG_CONN_URI = "postgresql+asyncpg://postgres:secretpassword@localhost:5432/postgres"
 
 Base = declarative_base()
 async_engine = create_async_engine(PG_CONN_URI, echo=False)
